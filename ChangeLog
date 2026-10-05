@@ -1,3 +1,26 @@
+2026.213: 4.3.0
+	- Allow -m and -r to be given multiple times, a record is kept if
+	it matches any -m pattern and rejected if it matches any -r pattern.
+	- Move the basic summary (-s) output to after the trace listing.
+	- Do not close stdout when writing output to it, which silently
+	discarded the trace listing, gap listing and basic summary.
+	- Update glob pattern matcher with improved version.
+	- Close the list file before returning on error in addlistfile().
+	- Widen sample count locals in the data printing code to int64_t.
+	- Skip sample printing for an unrecognized sample type instead of
+	printing a blank line per sample row after the error message.
+	- Reject non-numeric values given to -n, -tf, -tt, -rt, -gmin and
+	-gmax instead of silently treating them as zero, and allow -gmin
+	and -gmax to accept negative decimal values.
+	- Stop processing files once the record limit (-n) is reached, the
+	basic summary was counting files never opened.
+	- Allow '-b -' to write binary samples to stdout, the value was
+	rejected during option parsing.
+	- Fix mislabeled "Skipping (endtime)" message.
+	- Print the read error message before exiting when a file cannot
+	be read (previously exited silently).
+	- Update libmseed to v3.5.3.
+
 2025.234: 4.2.4
 	- Update libmseed to v3.1.7.  Fix for invalid time stamps in v2
   record blockettes and reduced precision in extra header floats.

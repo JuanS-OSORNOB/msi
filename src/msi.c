@@ -22,13 +22,17 @@
 
 static int processparam (int argcount, char **argvec);
 static char *getoptval (int argcount, char **argvec, int argopt);
+static long getoptint (int argcount, char **argvec, int argopt);
+static double getoptdouble (int argcount, char **argvec, int argopt);
 static int lisnumber (char *number);
 static int addfile (char *filename);
 static int addlistfile (char *filename);
+static int addmatch (const char *pattern);
+static int addreject (const char *pattern);
 static int my_globmatch (const char *string, const char *pattern);
 static void usage (void);
 
-#define VERSION "4.2.4"
+#define VERSION "4.3.0"
 #define PACKAGE "msi"
 
 static int8_t verbose = 0;
@@ -53,9 +57,6 @@ static char *binfile = NULL;
 static char *outfile = NULL;
 static nstime_t starttime = NSTERROR; /* Limit to records containing or after starttime */
 static nstime_t endtime = NSTERROR; /* Limit to records containing or before endtime */
-static char *match = NULL; /* Glob match pattern */
-static char *reject = NULL; /* Glob reject pattern */
-
 static double timetol; /* Time tolerance for continuous traces */
 static double sampratetol; /* Sample rate tolerance for continuous traces */
 static MS3Tolerance tolerance = { .time = NULL, .samprate = NULL };
@@ -70,6 +71,17 @@ struct filelink
 
 struct filelink *filelist = 0;
 struct filelink *filelisttail = 0;
+
+struct patternlink
+{
+  char *pattern;
+  struct patternlink *next;
+};
+
+struct patternlink *matchlist = 0;
+struct patternlink *matchlisttail = 0;
+struct patternlink *rejectlist = 0;
+struct patternlink *rejectlisttail = 0;
 
 int
 main (int argc, char **argv)
@@ -88,7 +100,7 @@ main (int argc, char **argv)
   int64_t totalsamps = 0;
   int64_t totalfiles = 0;
 
-  char stime[30];
+  char stime[40];
 
   /* Set default error message prefix */
   ms_loginit (NULL, NULL, NULL, "ERROR: ");
@@ -175,18 +187,30 @@ main (int argc, char **argv)
           if (verbose >= 3)
           {
             ms_nstime2timestr_n (msr->starttime, stime, sizeof (stime), timeformat, NANO);
-            ms_log (1, "Skipping (starttime) %s, %s\n", msr->sid, stime);
+            ms_log (1, "Skipping (endtime) %s, %s\n", msr->sid, stime);
           }
           continue;
         }
       }
 
-      if (match || reject)
+      if (matchlist || rejectlist)
       {
-        /* Check if record is matched by the match pattern */
-        if (match)
+        /* Check if record is matched by any match pattern */
+        if (matchlist)
         {
-          if (my_globmatch (msr->sid, match) == 0)
+          struct patternlink *plp;
+          int matched = 0;
+
+          for (plp = matchlist; plp; plp = plp->next)
+          {
+            if (my_globmatch (msr->sid, plp->pattern))
+            {
+              matched = 1;
+              break;
+            }
+          }
+
+          if (!matched)
           {
             if (verbose >= 3)
             {
@@ -197,10 +221,22 @@ main (int argc, char **argv)
           }
         }
 
-        /* Check if record is rejected by the reject pattern */
-        if (reject)
+        /* Check if record is rejected by any reject pattern */
+        if (rejectlist)
         {
-          if (my_globmatch (msr->sid, reject) != 0)
+          struct patternlink *plp;
+          int rejected = 0;
+
+          for (plp = rejectlist; plp; plp = plp->next)
+          {
+            if (my_globmatch (msr->sid, plp->pattern))
+            {
+              rejected = 1;
+              break;
+            }
+          }
+
+          if (rejected)
           {
             if (verbose >= 3)
             {
@@ -221,7 +257,7 @@ main (int argc, char **argv)
       if (!tracegaponly)
       {
         if (printoffset)
-          ms_log (0, "%-10" PRId64, (msfp->streampos - msr->reclen));
+          ms_log (0, "%-14" PRId64, (msfp->streampos - msr->reclen));
 
         if (printlatency)
           ms_log (0, "%-10.6g secs ", msr3_host_latency (msr));
@@ -238,28 +274,27 @@ main (int argc, char **argv)
       }
 
       if (tracegapsum || tracegaponly)
-        mstl3_addmsr (mstl, msr, splitversion, flags, 1, &tolerance);
+        mstl3_addmsr (mstl, msr, splitversion, 1, 0, &tolerance);
 
       if (dataflag)
       {
         /* Parse the record (again) and unpack the data */
-        int unpacked = msr3_unpack_data (msr, verbose);
+        int64_t unpacked = msr3_unpack_data (msr, verbose);
 
         if (unpacked > 0 && printdata && !tracegaponly)
         {
           int line, col, cnt, samplesize;
-          int lines = (msr->numsamples / 6) + 1;
+          int64_t lines = (msr->numsamples / 6) + 1;
           void *sptr;
 
           if ((samplesize = ms_samplesize (msr->sampletype)) == 0)
           {
             ms_log (2, "Unrecognized sample type: %c\n", msr->sampletype);
           }
-
-          if (msr->sampletype == 't')
+          else if (msr->sampletype == 't')
           {
             char *textdata = (char *)msr->datasamples;
-            int length = msr->numsamples;
+            int64_t length = msr->numsamples;
 
             ms_log (0, "Text Data:\n");
 
@@ -274,7 +309,7 @@ main (int argc, char **argv)
             /* Print any remaining ASCII and add a newline */
             if (length > 0)
             {
-              ms_log (0, "%.*s\n", length, textdata);
+              ms_log (0, "%.*s\n", (int)length, textdata);
             }
             else
             {
@@ -335,6 +370,7 @@ main (int argc, char **argv)
     /* Print error if not EOF and not counting down records */
     if (retcode != MS_ENDOFFILE && reccntdown != 0)
     {
+      ms_log (2, "Cannot read %s: %s\n", flp->filename, ms_errorstr (retcode));
       ms3_readmsr_r (&msfp, &msr, NULL, 0, 0);
       exit (1);
     }
@@ -344,17 +380,18 @@ main (int argc, char **argv)
 
     totalfiles++;
     flp = flp->next;
+
+    /* Stop if the record count limit has been reached */
+    if (reccntdown == 0)
+      break;
   } /* End of looping over file list */
 
-  if (binfile)
+  /* Close output files, leaving stdout open for any remaining output */
+  if (binfile && bfp != stdout)
     fclose (bfp);
 
-  if (outfile)
+  if (outfile && ofp != stdout)
     fclose (ofp);
-
-  if (basicsum)
-    ms_log (0, "Files: %" PRId64 ", Records: %" PRId64 ", Samples: %" PRId64 "\n",
-            totalfiles, totalrecs, totalsamps);
 
   if (tracegapsum || tracegaponly)
   {
@@ -371,6 +408,10 @@ main (int argc, char **argv)
       mstl3_printsynclist (mstl, NULL, 1);
     }
   }
+
+  if (basicsum)
+    ms_log (0, "Files: %" PRId64 ", Records: %" PRId64 ", Samples: %" PRId64 "\n",
+            totalfiles, totalrecs, totalsamps);
 
   if (mstl)
     mstl3_free (&mstl, 0);
@@ -389,8 +430,6 @@ processparam (int argcount, char **argvec)
 {
   int optind;
   int timeformat_option = -1;
-  char *match_pattern = NULL;
-  char *reject_pattern = NULL;
   char *tptr;
 
   /* Process all command line arguments */
@@ -436,15 +475,17 @@ processparam (int argcount, char **argvec)
     }
     else if (strcmp (argvec[optind], "-m") == 0)
     {
-      match_pattern = strdup (getoptval (argcount, argvec, optind++));
+      if (addmatch (getoptval (argcount, argvec, optind++)))
+        exit (1);
     }
     else if (strcmp (argvec[optind], "-r") == 0)
     {
-      reject_pattern = strdup (getoptval (argcount, argvec, optind++));
+      if (addreject (getoptval (argcount, argvec, optind++)))
+        exit (1);
     }
     else if (strcmp (argvec[optind], "-n") == 0)
     {
-      reccntdown = strtol (getoptval (argcount, argvec, optind++), NULL, 10);
+      reccntdown = getoptint (argcount, argvec, optind++);
     }
     else if (strcmp (argvec[optind], "-snd") == 0)
     {
@@ -496,12 +537,12 @@ processparam (int argcount, char **argvec)
     }
     else if (strcmp (argvec[optind], "-tt") == 0)
     {
-      timetol = strtod (getoptval (argcount, argvec, optind++), NULL);
+      timetol = getoptdouble (argcount, argvec, optind++);
       tolerance.time = timetol_callback;
     }
     else if (strcmp (argvec[optind], "-rt") == 0)
     {
-      sampratetol = strtod (getoptval (argcount, argvec, optind++), NULL);
+      sampratetol = getoptdouble (argcount, argvec, optind++);
       tolerance.samprate = samprate_callback;
     }
     else if (strcmp (argvec[optind], "-g") == 0)
@@ -518,12 +559,12 @@ processparam (int argcount, char **argvec)
     }
     else if (strcmp (argvec[optind], "-gmin") == 0)
     {
-      mingap = strtod (getoptval (argcount, argvec, optind++), NULL);
+      mingap = getoptdouble (argcount, argvec, optind++);
       mingapptr = &mingap;
     }
     else if (strcmp (argvec[optind], "-gmax") == 0)
     {
-      maxgap = strtod (getoptval (argcount, argvec, optind++), NULL);
+      maxgap = getoptdouble (argcount, argvec, optind++);
       maxgapptr = &maxgap;
     }
     else if (strcmp (argvec[optind], "-Q") == 0 ||
@@ -533,7 +574,7 @@ processparam (int argcount, char **argvec)
     }
     else if (strcmp (argvec[optind], "-tf") == 0)
     {
-      timeformat_option = strtol (getoptval (argcount, argvec, optind++), NULL, 10);
+      timeformat_option = getoptint (argcount, argvec, optind++);
     }
     else if (strcmp (argvec[optind], "-b") == 0)
     {
@@ -603,30 +644,6 @@ processparam (int argcount, char **argvec)
     exit (1);
   }
 
-  /* Add wildcards to match pattern for logical "contains" */
-  if (match_pattern)
-  {
-    if ((match = malloc (strlen (match_pattern) + 3)) == NULL)
-    {
-      ms_log (2, "Error allocating memory\n");
-      exit (1);
-    }
-
-    snprintf (match, strlen (match_pattern) + 3, "*%s*", match_pattern);
-  }
-
-  /* Add wildcards to reject pattern for logical "contains" */
-  if (reject_pattern)
-  {
-    if ((reject = malloc (strlen (reject_pattern) + 3)) == NULL)
-    {
-      ms_log (2, "Error allocating memory\n");
-      exit (1);
-    }
-
-    snprintf (reject, strlen (reject_pattern) + 3, "*%s*", reject_pattern);
-  }
-
   /* Add program name and version to User-Agent for URL-based requests */
   if (libmseed_url_support() && ms3_url_useragent(PACKAGE, VERSION))
     return -1;
@@ -660,8 +677,9 @@ getoptval (int argcount, char **argvec, int argopt)
     return 0;
   }
 
-  /* Special case of '-o -' usage */
-  if ((argopt + 1) < argcount && strcmp (argvec[argopt], "-o") == 0)
+  /* Special cases of '-o -' and '-b -' usage */
+  if ((argopt + 1) < argcount &&
+      (strcmp (argvec[argopt], "-o") == 0 || strcmp (argvec[argopt], "-b") == 0))
     if (strcmp (argvec[argopt + 1], "-") == 0)
       return argvec[argopt + 1];
 
@@ -680,9 +698,62 @@ getoptval (int argcount, char **argvec, int argopt)
 } /* End of getoptval() */
 
 /***************************************************************************
+ * getoptint:
+ * Return the integer value of a command line option, as returned by
+ * getoptval(), requiring the entire value to be a valid integer.
+ *
+ * Returns value on success and exits with error message on failure
+ ***************************************************************************/
+static long
+getoptint (int argcount, char **argvec, int argopt)
+{
+  char *value = getoptval (argcount, argvec, argopt);
+  char *endptr = NULL;
+  long lvalue;
+
+  errno = 0;
+  lvalue = strtol (value, &endptr, 10);
+
+  if (errno || endptr == value || *endptr != '\0')
+  {
+    ms_log (2, "Invalid integer value for %s: %s\n", argvec[argopt], value);
+    exit (1);
+  }
+
+  return lvalue;
+} /* End of getoptint() */
+
+/***************************************************************************
+ * getoptdouble:
+ * Return the value of a command line option, as returned by getoptval(),
+ * requiring the entire value to be a valid floating point number.
+ *
+ * Returns value on success and exits with error message on failure
+ ***************************************************************************/
+static double
+getoptdouble (int argcount, char **argvec, int argopt)
+{
+  char *value = getoptval (argcount, argvec, argopt);
+  char *endptr = NULL;
+  double dvalue;
+
+  errno = 0;
+  dvalue = strtod (value, &endptr);
+
+  if (errno || endptr == value || *endptr != '\0')
+  {
+    ms_log (2, "Invalid number value for %s: %s\n", argvec[argopt], value);
+    exit (1);
+  }
+
+  return dvalue;
+} /* End of getoptdouble() */
+
+/***************************************************************************
  * lisnumber:
  *
- * Test if the string is all digits allowing an initial minus sign.
+ * Test if the string is a number, allowing an initial minus sign and a
+ * single decimal point.
  *
  * Return 0 if not a number otherwise 1.
  ***************************************************************************/
@@ -690,11 +761,19 @@ static int
 lisnumber (char *number)
 {
   int idx = 0;
+  int decimal = 0;
 
   while (*(number + idx))
   {
     if (idx == 0 && *(number + idx) == '-')
     {
+      idx++;
+      continue;
+    }
+
+    if (*(number + idx) == '.' && !decimal)
+    {
+      decimal = 1;
       idx++;
       continue;
     }
@@ -760,6 +839,100 @@ addfile (char *filename)
 } /* End of addfile() */
 
 /***************************************************************************
+ * addmatch:
+ *
+ * Add a glob pattern, wrapped in wildcards, to the end of the global
+ * match list (matchlist).  May be called more than once to accumulate
+ * multiple patterns, any of which will allow a record to be kept.
+ *
+ * Returns 0 on success and -1 on error.
+ ***************************************************************************/
+static int
+addmatch (const char *pattern)
+{
+  struct patternlink *newpp;
+
+  newpp = (struct patternlink *)calloc (1, sizeof (struct patternlink));
+
+  if (!newpp)
+  {
+    ms_log (2, "addmatch(): Cannot allocate memory\n");
+    return -1;
+  }
+
+  newpp->pattern = malloc (strlen (pattern) + 3);
+
+  if (!newpp->pattern)
+  {
+    ms_log (2, "addmatch(): Cannot allocate memory\n");
+    return -1;
+  }
+
+  snprintf (newpp->pattern, strlen (pattern) + 3, "*%s*", pattern);
+
+  /* Add new pattern to the end of the list */
+  if (!matchlisttail)
+  {
+    matchlist = newpp;
+    matchlisttail = newpp;
+  }
+  else
+  {
+    matchlisttail->next = newpp;
+    matchlisttail = newpp;
+  }
+
+  return 0;
+} /* End of addmatch() */
+
+/***************************************************************************
+ * addreject:
+ *
+ * Add a glob pattern, wrapped in wildcards, to the end of the global
+ * reject list (rejectlist).  May be called more than once to accumulate
+ * multiple patterns, any of which will cause a record to be rejected.
+ *
+ * Returns 0 on success and -1 on error.
+ ***************************************************************************/
+static int
+addreject (const char *pattern)
+{
+  struct patternlink *newpp;
+
+  newpp = (struct patternlink *)calloc (1, sizeof (struct patternlink));
+
+  if (!newpp)
+  {
+    ms_log (2, "addreject(): Cannot allocate memory\n");
+    return -1;
+  }
+
+  newpp->pattern = malloc (strlen (pattern) + 3);
+
+  if (!newpp->pattern)
+  {
+    ms_log (2, "addreject(): Cannot allocate memory\n");
+    return -1;
+  }
+
+  snprintf (newpp->pattern, strlen (pattern) + 3, "*%s*", pattern);
+
+  /* Add new pattern to the end of the list */
+  if (!rejectlisttail)
+  {
+    rejectlist = newpp;
+    rejectlisttail = newpp;
+  }
+  else
+  {
+    rejectlisttail->next = newpp;
+    rejectlisttail = newpp;
+  }
+
+  return 0;
+} /* End of addreject() */
+
+/***************************************************************************
  * addlistfile:
  *
  * Add files listed in the specified file to the global input file list.
@@ -802,7 +975,10 @@ addlistfile (char *filename)
       ms_log (1, "Adding '%s' from list file\n", filelistent);
 
     if (addfile (filelistent))
+    {
+      fclose (fp);
       return -1;
+    }
 
     filecount++;
   }
@@ -813,170 +989,235 @@ addlistfile (char *filename)
 } /* End of addlistfile() */
 
 /***********************************************************************
- * robust glob pattern matcher
- * ozan s. yigit/dec 1994
- * public domain
+ * my_globmatch:
  *
- * glob patterns:
+ * Check if a string matches a globbing pattern, adapted from
+ * ms_globmatch() in libmseed.
+ *
+ * Supported syntax:
  *	*	matches zero or more characters
  *	?	matches any single character
  *	[set]	matches any character in the set
- *	[^set]	matches any character NOT in the set
+ *	[!set] or [^set]  matches any character NOT in the set
  *		where a set is a group of characters or ranges. a range
- *		is written as two characters seperated with a hyphen: a-z denotes
+ *		is written as two characters separated with a hyphen: a-z denotes
  *		all characters between a to z inclusive.
- *	[-set]	set matches a literal hypen and any character in the set
- *	[]set]	matches a literal close bracket and any character in the set
+ *	\char	matches char literally, including any pattern character
  *
- *	char	matches itself except where char is '*' or '?' or '['
- *	\char	matches char, including any pattern character
- *
- * examples:
- *	a*c		ac abc abbc ...
- *	a?c		acc abc aXc ...
- *	a[a-z]c		aac abc acc ...
- *	a[-a-z]c	a-c aac abc ...
- *
- * Revision 1.4  2004/12/26  12:38:00  ct
- * Changed function name (amatch -> globmatch), variables and
- * formatting for clarity.  Also add matching header globmatch.h.
- *
- * Revision 1.3  1995/09/14  23:24:23  oz
- * removed boring test/main code.
- *
- * Revision 1.2  94/12/11  10:38:15  oz
- * charset code fixed. it is now robust and interprets all
- * variations of charset [i think] correctly, including [z-a] etc.
- *
- * Revision 1.1  94/12/08  12:45:23  oz
- * Initial revision
- ***********************************************************************/
-
-#define GLOBMATCH_TRUE 1
-#define GLOBMATCH_FALSE 0
-#define GLOBMATCH_NEGATE '^' /* std char set negation char */
-
-/***********************************************************************
- * my_globmatch:
- *
- * Check if a string matches a globbing pattern.
+ * Notes / limitations:
+ * - Escapes are not interpreted inside [...]; e.g. [\]] is a class
+ *   containing '\' terminated by the first ']'.
+ * - Descending ranges (e.g. [z-a]) are treated as the three literal
+ *   characters rather than an error.
+ * - A trailing '\' with no following character matches a literal '\'.
  *
  * Return 0 if string does not match pattern and non-zero otherwise.
  **********************************************************************/
+static int matchcharclass (const char **pp, unsigned char c);
+
 static int
 my_globmatch (const char *string, const char *pattern)
 {
-  int negate;
-  int match;
-  int c;
+  const char *star_p = NULL;   /* position of the most recent '*' in pattern */
+  const char *star_s = NULL;   /* position in string when that '*' was seen */
+  unsigned char star_skip = 0; /* byte to skip past on backtrack, or 0 if none */
+  unsigned char c;
 
-  while (*pattern)
+  if (string == NULL || pattern == NULL)
+    return 0;
+
+  for (;;)
   {
-    if (!*string && *pattern != '*')
-      return GLOBMATCH_FALSE;
+    c = (unsigned char)*pattern++;
 
-    switch (c = *pattern++)
+    switch (c)
     {
+    case '\0':
+      /* End of pattern: must also be end of string unless a previous '*'
+         can consume more characters. */
+      if (*string == '\0')
+        return 1;
+      if (star_p)
+        goto star_backtrack;
+      return 0;
+
+    case '?':
+      if (*string == '\0')
+        goto star_backtrack;
+      string++;
+      break;
 
     case '*':
+      /* Collapse consecutive '*' */
       while (*pattern == '*')
         pattern++;
 
-      if (!*pattern)
-        return GLOBMATCH_TRUE;
+      /* Trailing '*' matches everything */
+      if (*pattern == '\0')
+        return 1;
 
-      if (*pattern != '?' && *pattern != '[' && *pattern != '\\')
-        while (*string && *pattern != *string)
-          string++;
-
-      while (*string)
+      /* Determine the literal byte (if any) following the '*'. If it is a
+         literal, we can skip string characters that cannot match it. */
       {
-        if (my_globmatch (string, pattern))
-          return GLOBMATCH_TRUE;
-        string++;
+        unsigned char next = (unsigned char)*pattern;
+
+        if (next == '\\' && pattern[1])
+          next = (unsigned char)pattern[1];
+        else if (next == '?' || next == '[')
+          next = 0; /* not a literal; skip the optimization */
+
+        star_skip = next;
+
+        if (star_skip)
+        {
+          const char *found = strchr (string, star_skip);
+          if (found == NULL)
+            return 0; /* required literal cannot occur in remaining string */
+          string = found;
+        }
       }
-      return GLOBMATCH_FALSE;
 
-    case '?':
-      if (*string)
-        break;
-      return GLOBMATCH_FALSE;
+      star_p = pattern - 1;
+      star_s = string;
+      continue;
 
-      /* set specification is inclusive, that is [a-z] is a, z and
-       * everything in between. this means [z-a] may be interpreted
-       * as a set that contains z, a and nothing in between.
-       */
     case '[':
-      if (*pattern != GLOBMATCH_NEGATE)
-        negate = GLOBMATCH_FALSE;
-      else
-      {
-        negate = GLOBMATCH_TRUE;
-        pattern++;
-      }
-
-      match = GLOBMATCH_FALSE;
-
-      while (!match && (c = *pattern++))
-      {
-        if (!*pattern)
-          return GLOBMATCH_FALSE;
-
-        if (*pattern == '-') /* c-c */
-        {
-          if (!*++pattern)
-            return GLOBMATCH_FALSE;
-          if (*pattern != ']')
-          {
-            if (*string == c || *string == *pattern ||
-                (*string > c && *string < *pattern))
-              match = GLOBMATCH_TRUE;
-          }
-          else
-          { /* c-] */
-            if (*string >= c)
-              match = GLOBMATCH_TRUE;
-            break;
-          }
-        }
-        else /* cc or c] */
-        {
-          if (c == *string)
-            match = GLOBMATCH_TRUE;
-          if (*pattern != ']')
-          {
-            if (*pattern == *string)
-              match = GLOBMATCH_TRUE;
-          }
-          else
-            break;
-        }
-      }
-
-      if (negate == match)
-        return GLOBMATCH_FALSE;
-
-      /* If there is a match, skip past the charset and continue on */
-      while (*pattern && *pattern != ']')
-        pattern++;
-      if (!*pattern++) /* oops! */
-        return GLOBMATCH_FALSE;
-      break;
-
-    case '\\':
-      if (*pattern)
-        c = *pattern++;
-    default:
-      if (c != *string)
-        return GLOBMATCH_FALSE;
+    {
+      const char *pp = pattern;
+      if (*string == '\0')
+        goto star_backtrack;
+      if (!matchcharclass (&pp, (unsigned char)*string))
+        goto star_backtrack;
+      pattern = pp;
+      string++;
       break;
     }
 
-    string++;
+    case '\\':
+      if (*pattern)
+        c = (unsigned char)*pattern++;
+      /* FALLTHROUGH */
+
+    default:
+      if ((unsigned char)*string != c)
+        goto star_backtrack;
+      string++;
+      break;
+    }
+
+    continue;
+
+  star_backtrack:
+    /* If there was a previous '*', backtrack: let it consume one more
+       character and retry from pattern just after that '*'. */
+    if (star_p)
+    {
+      if (*star_s == '\0')
+        return 0;
+
+      star_s++;
+
+      /* Reuse the saved fast-forward byte so we don't walk non-matching
+         characters one at a time on each retry. */
+      if (star_skip)
+      {
+        const char *found = strchr (star_s, star_skip);
+        if (found == NULL)
+          return 0;
+        star_s = found;
+      }
+      else if (*star_s == '\0')
+      {
+        return 0;
+      }
+
+      string = star_s;
+      pattern = star_p + 1;
+      continue;
+    }
+    return 0;
+  }
+} /* End of my_globmatch() */
+
+/***********************************************************************
+ * matchcharclass:
+ *
+ * Character class parser helper for my_globmatch().
+ *
+ * On entry: *pp points just past '['.  If the class is negated, the
+ * next character is '!' or '^' and is handled inside this function.
+ *
+ * On return: *pp is advanced past the closing ']'.
+ *
+ * Return 1 if c matches the class, 0 otherwise.
+ **********************************************************************/
+static int
+matchcharclass (const char **pp, unsigned char c)
+{
+  const char *p;
+  int negate = 0;
+  int matched = 0;
+
+  if (pp == NULL || *pp == NULL)
+    return 0;
+
+  p = *pp;
+
+  /* Handle negation */
+  if (*p == '^' || *p == '!')
+  {
+    negate = 1;
+    p++;
   }
 
-  return !*string;
-} /* End of my_globmatch() */
+  /* Per glob rules, leading ']' is literal */
+  if (*p == ']')
+  {
+    matched = (c == ']');
+    p++;
+  }
+
+  /* Per glob rules, leading '-' is literal */
+  if (*p == '-')
+  {
+    matched |= (c == '-');
+    p++;
+  }
+
+  /* Main loop until ']' or end of string */
+  while (*p && *p != ']')
+  {
+    unsigned char pc = (unsigned char)*p;
+
+    if (p[1] == '-' && p[2] && p[2] != ']' && (unsigned char)pc <= (unsigned char)p[2])
+    {
+      /* Range X-Y (only ascending ranges are supported) */
+      unsigned char start = pc;
+      unsigned char end = (unsigned char)p[2];
+
+      matched |= (c >= start && c <= end);
+
+      p += 3; /* skip X-Y */
+    }
+    else
+    {
+      /* Literal character */
+      matched |= (c == pc);
+      p++;
+    }
+  }
+
+  /* Malformed class (no closing ']') -> no match */
+  if (*p != ']')
+  {
+    *pp = p;
+    return 0;
+  }
+
+  *pp = p + 1; /* skip ']' */
+
+  return negate ? !matched : matched;
+} /* End of matchcharclass() */
 
 /***************************************************************************
  * usage():
@@ -1002,7 +1243,9 @@ usage (void)
            " -te time     Limit to records that end before time\n"
            "                time format: 'YYYY[,DDD,HH,MM,SS,FFFFFF]' delimiters: [,:.]\n"
            " -m match     Limit to records containing the specified pattern\n"
-           " -r reject    Limit to records not containing the specfied pattern\n"
+           "                may be used multiple times, a record matching any is kept\n"
+           " -r reject    Limit to records not containing the specified pattern\n"
+           "                may be used multiple times, a record matching any is rejected\n"
            "                Patterns are applied to: 'FDSN:NET_STA_LOC_BAND_SOURCE_SS'\n"
            " -n count     Only process count number of records\n"
            " -snd         Skip non-miniSEED data\n"
