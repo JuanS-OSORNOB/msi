@@ -1,0 +1,586 @@
+{
+  "source": "/mnt/e/DCCDATA/OESCHIBACH/2026/453038975/20260911062830/DigiSolo.log",
+  "source_bytes": 10314844,
+  "encoding": "utf-8-sig",
+  "section_count": 50104,
+  "section_counts": {
+    "DeviceInfo": 2,
+    "BatteryPowerOnStop": 1,
+    "Notify": 18,
+    "GPS": 34614,
+    "Temperature": 9942,
+    "Battery": 3345,
+    "Memory": 2180,
+    "Error": 2
+  },
+  "utc_start": "2026-07-03T05:54:09+00:00",
+  "utc_end": "2026-09-11T06:28:31+00:00",
+  "span_days": 70.02386574074075,
+  "gps_status_counts": {
+    "GPS Cycle Off": 11115,
+    "GPS Cycle On": 11115,
+    "GPS Synchronization": 12384
+  },
+  "metrics": {
+    "Battery.Voltage": {
+      "unit": "V (assumed)",
+      "count": 3345,
+      "min": 6.0904,
+      "median": 7.1005,
+      "max": 8.1721,
+      "first": 7.5817,
+      "last": 6.6936,
+      "median_interval_seconds": 1800.0,
+      "max_gap_seconds": 1824.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "Temperature.Temperature": {
+      "unit": "deg C (assumed)",
+      "count": 9942,
+      "min": 9.625,
+      "median": 18.125,
+      "max": 45.875,
+      "first": 18.8125,
+      "last": 10.0625,
+      "median_interval_seconds": 600.0,
+      "max_gap_seconds": 624.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "Memory.Used Memory": {
+      "unit": "logged units",
+      "count": 2180,
+      "min": 21.0,
+      "median": 13318.0,
+      "max": 26600.0,
+      "first": 21.0,
+      "last": 26600.0,
+      "median_interval_seconds": 2760.0,
+      "max_gap_seconds": 3168.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "Memory.Available Memory": {
+      "unit": "logged units",
+      "count": 2180,
+      "min": 94383.0,
+      "median": 107665.0,
+      "max": 120962.0,
+      "first": 120962.0,
+      "last": 94383.0,
+      "median_interval_seconds": 2760.0,
+      "max_gap_seconds": 3168.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Satellite Number": {
+      "unit": "count",
+      "count": 12384,
+      "min": 3.0,
+      "median": 6.0,
+      "max": 11.0,
+      "first": 6.0,
+      "last": 6.0,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Phase Error": {
+      "unit": "unspecified",
+      "count": 11115,
+      "min": 0.0,
+      "median": 28.0,
+      "max": 91.0,
+      "first": 1.0,
+      "last": 36.0,
+      "median_interval_seconds": 552.0,
+      "max_gap_seconds": 1320.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Altitude": {
+      "unit": "m (assumed; datum unknown)",
+      "count": 12384,
+      "min": 1398.1,
+      "median": 1540.2,
+      "max": 2253.8,
+      "first": 1538.7,
+      "last": 1541.8,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.eCompass North": {
+      "unit": "deg (assumed)",
+      "count": 12384,
+      "min": 43.609,
+      "median": 46.047,
+      "max": 47.913,
+      "first": 45.46,
+      "last": 46.464,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Tilted Angle": {
+      "unit": "deg (assumed)",
+      "count": 12384,
+      "min": 0.595,
+      "median": 1.409,
+      "max": 2.658,
+      "first": 1.589,
+      "last": 1.676,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Roll Angle": {
+      "unit": "deg (assumed)",
+      "count": 12384,
+      "min": -1.478,
+      "median": -0.762,
+      "max": 0.746,
+      "first": -0.486,
+      "last": -1.314,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    },
+    "GPS.Pitch Angle": {
+      "unit": "deg (assumed)",
+      "count": 12384,
+      "min": 0.0,
+      "median": 1.193,
+      "max": 2.656,
+      "first": 1.513,
+      "last": 1.04,
+      "median_interval_seconds": 480.0,
+      "max_gap_seconds": 504.0,
+      "gaps_over_3x_median": 0,
+      "duplicate_timestamps": 0
+    }
+  },
+  "events": [
+    {
+      "section": "BatteryPowerOnStop",
+      "line": 60,
+      "utc": null,
+      "fields": {},
+      "pairs": []
+    },
+    {
+      "section": "Notify00001",
+      "line": 135,
+      "utc": "2026-07-03T05:54:09+00:00",
+      "fields": {
+        "UTC Time": "2026/07/03,05:54:09",
+        "Start Acquisition FileName": "Seis000.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/03,05:54:09"
+        ],
+        [
+          "Start Acquisition FileName",
+          "Seis000.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00002",
+      "line": 25818,
+      "utc": "2026-07-07T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/07,05:54:07",
+        "Changed Acquisition FileName": "Seis001.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/07,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis001.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00003",
+      "line": 51494,
+      "utc": "2026-07-11T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/11,05:54:07",
+        "Changed Acquisition FileName": "Seis002.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/11,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis002.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00004",
+      "line": 77084,
+      "utc": "2026-07-15T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/15,05:54:07",
+        "Changed Acquisition FileName": "Seis003.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/15,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis003.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00005",
+      "line": 102688,
+      "utc": "2026-07-19T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/19,05:54:07",
+        "Changed Acquisition FileName": "Seis004.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/19,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis004.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00006",
+      "line": 128338,
+      "utc": "2026-07-23T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/23,05:54:07",
+        "Changed Acquisition FileName": "Seis005.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/23,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis005.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00007",
+      "line": 153924,
+      "utc": "2026-07-27T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/27,05:54:07",
+        "Changed Acquisition FileName": "Seis006.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/27,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis006.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00008",
+      "line": 179608,
+      "utc": "2026-07-31T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/07/31,05:54:07",
+        "Changed Acquisition FileName": "Seis007.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/07/31,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis007.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00009",
+      "line": 205205,
+      "utc": "2026-08-04T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/04,05:54:07",
+        "Changed Acquisition FileName": "Seis008.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/04,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis008.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00010",
+      "line": 230820,
+      "utc": "2026-08-08T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/08,05:54:07",
+        "Changed Acquisition FileName": "Seis009.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/08,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis009.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Error00001",
+      "line": 235661,
+      "utc": "2026-08-08T23:59:43+00:00",
+      "fields": {
+        "UTC Time": "2026/08/08,23:59:43",
+        "Error_Type": "Wrong 1pps time(1870659584,1124933)"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/08,23:59:43"
+        ],
+        [
+          "Error_Type",
+          "Wrong 1pps time(1870659584,1124933)"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00011",
+      "line": 256466,
+      "utc": "2026-08-12T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/12,05:54:07",
+        "Changed Acquisition FileName": "Seis010.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/12,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis010.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00012",
+      "line": 282101,
+      "utc": "2026-08-16T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/16,05:54:07",
+        "Changed Acquisition FileName": "Seis011.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/16,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis011.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Error00002",
+      "line": 306897,
+      "utc": "2026-08-20T02:56:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/20,02:56:07",
+        "Error_Type": "Compared Voltage    6.499,   6.500"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/20,02:56:07"
+        ],
+        [
+          "Error_Type",
+          "Battery Low Warning"
+        ],
+        [
+          "Error_Type",
+          "Compared Voltage    6.499,   6.500"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00013",
+      "line": 307695,
+      "utc": "2026-08-20T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/20,05:54:07",
+        "Changed Acquisition FileName": "Seis012.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/20,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis012.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00014",
+      "line": 333238,
+      "utc": "2026-08-24T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/24,05:54:07",
+        "Changed Acquisition FileName": "Seis013.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/24,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis013.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00015",
+      "line": 358785,
+      "utc": "2026-08-28T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/08/28,05:54:07",
+        "Changed Acquisition FileName": "Seis014.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/08/28,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis014.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00016",
+      "line": 384319,
+      "utc": "2026-09-01T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/09/01,05:54:07",
+        "Changed Acquisition FileName": "Seis015.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/09/01,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis015.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00017",
+      "line": 409916,
+      "utc": "2026-09-05T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/09/05,05:54:07",
+        "Changed Acquisition FileName": "Seis016.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/09/05,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis016.DLD"
+        ]
+      ]
+    },
+    {
+      "section": "Notify00018",
+      "line": 435449,
+      "utc": "2026-09-09T05:54:07+00:00",
+      "fields": {
+        "UTC Time": "2026/09/09,05:54:07",
+        "Changed Acquisition FileName": "Seis017.DLD"
+      },
+      "pairs": [
+        [
+          "UTC Time",
+          "2026/09/09,05:54:07"
+        ],
+        [
+          "Changed Acquisition FileName",
+          "Seis017.DLD"
+        ]
+      ]
+    }
+  ],
+  "warnings": [
+    "1 duplicate keys: raw pairs preserved; plots use the last occurrence within each section.",
+    "Preamble/header retained verbatim; its numeric tuple is not decoded without a format specification.",
+    "Boot RTC is invalid or in a different year from timed observations; excluded from coverage dates.",
+    "Some GPS records report Leap Second = 0; UTC fields are used as logged, without automatic correction."
+  ],
+  "preamble": [
+    [
+      1,
+      "<00002,34614,09942,02180,03345,00002,00001>"
+    ]
+  ],
+  "decisions": [
+    "Use record UTC Time for coverage and chronological plots; preserve other clocks separately.",
+    "Group headers by trailing numeric suffix; retain every original section and source line.",
+    "Preserve outliers and unknown fields. No automatic filtering, interpolation or unit conversion.",
+    "Temperature deg C, voltage V, angles deg, coordinates deg and altitude m are conventional assumptions, not declared units.",
+    "Memory is in unspecified logged units; use Used/Total*100 for storage percentage.",
+    "Phase Error, GPS Tick, gains and diagnostic units are not decoded. Voltage Threshold is retained raw.",
+    "Coordinate scatter describes reported fixes, not confirmed movement; zoom is display-only.",
+    "RTC minus record UTC and latest-fix age compare logged timestamps; neither alone proves a clock fault.",
+    "A gap over three times median positive cadence is a review flag, not proof of lost acquisition.",
+    "Log end is an observation boundary, not evidence of shutdown. DLD waveforms are separate files."
+  ]
+}

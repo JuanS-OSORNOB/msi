@@ -3,6 +3,7 @@
 *.log
 *.png
 *.jpg
+*.pdf
 
 # C build objects
 *.a
