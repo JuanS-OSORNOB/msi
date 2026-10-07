@@ -1,6 +1,21 @@
+import matplotlib
+matplotlib.use("Agg")  # Set before importing ObsPy.
+
 import obspy
-filepath = "/mnt/c/SOLODATA/Roya/setup_2026-02-24/test_friday/453039008.0001.2026.02.20.10.16.08.000.Z.miniseed"
-st = obspy.read(filepath)
-tr = st[0]
-fig = tr.plot()
-fig.savefig("/mnt/c/Users/manip/Documents/trace_plot_Z.png")
+from pathlib import Path
+
+filepath = Path(
+    "/mnt/e/SOLODATA/SPZ/2026/DEPLOYMENT_01/"
+    "453038969.0015.2026.07.16.00.00.00.000.ENZ.miniseed"
+)
+
+if filepath.stat().st_size == 0:
+    raise ValueError(f"Empty file: {filepath}")
+
+st = obspy.read(str(filepath), format="MSEED")
+print(st)
+
+output = Path(__file__).resolve().parent / "trace_plot_ENZ.png"
+fig = st[0].plot(show=False)
+fig.savefig(output)
+print(f"Plot saved to: {output}")

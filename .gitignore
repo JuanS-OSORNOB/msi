@@ -1,6 +1,8 @@
 # Analysis outputs
 *.csv
 *.log
+*.png
+*.jpg
 
 # C build objects
 *.a

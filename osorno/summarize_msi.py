@@ -1,14 +1,13 @@
 """
 @author: Juan Osorno
 @date: 2026-09-23
-@description: Summarize miniSEED trace output by reading a formatted station log,
+@description: Summarize miniSEED trace output by reading multiple formatted station logs,
     grouping records by channel, detecting continuous segments and gaps, and
     exporting a compact per-channel summary CSV and a detailed gaps CSV.
 @modified: 2026-10-05
 
 """
 import pandas as pd
-from io import StringIO
 from pathlib import Path
 
 def format_duration(td):
@@ -19,271 +18,325 @@ def format_duration(td):
     seconds = total_seconds % 60
     return f"{days} days, {hours:02}:{minutes:02}:{seconds:02}"
 
-#region Parse formatted
-BASEPATH = '/home/manip/GitHub/msi/osorno/453038956'
-program_output_formatted = f'{BASEPATH}/program_output_formatted.csv'
-df = pd.read_csv(
-    program_output_formatted,
-    sep=';',
-    skiprows=1,
-    names=['SourceID', 'Start_sample', 'End_sample', 'Hz', 'Samples']
-)
+def summarize_file(input_file):
+    """Print coverage and save summary and gaps CSVs beside one input file."""
+    #region Parse formatted
+    input_path = Path(input_file)
+    output_dir = input_path.parent
+    print(f'\nProcessing: {input_path}')
+    df = pd.read_csv(
+        input_path,
+        sep=';',
+        skiprows=1,
+        names=['SourceID', 'Start_sample', 'End_sample', 'Hz', 'Samples']
+    )
 
-#print(df.head())
+    if df.empty:
+        raise ValueError(f'No trace rows found in {input_path}')
 
-# Clean/Parse timestamps
-df['Start_sample'] = pd.to_datetime(df['Start_sample'])
-df['End_sample'] = pd.to_datetime(df['End_sample'])
+    # Clean/Parse timestamps
+    df['Start_sample'] = pd.to_datetime(df['Start_sample'])
+    df['End_sample'] = pd.to_datetime(df['End_sample'])
 
-# Extract channel (e.g., E, N, Z) from the end of SourceID
-df['Channel'] = df['SourceID'].apply(lambda x: x.split('_')[-1])
+    # Extract channel (e.g., E, N, Z) from the end of SourceID
+    df['Channel'] = df['SourceID'].apply(lambda x: x.split('_')[-1])
 
-# Extract the ID
-df['ID'] = df['SourceID'].str.split('_').str[1].str[-4:]
-print(df['ID'])
+    # Extract the ID
+    df['ID'] = df['SourceID'].str.split('_').str[1].str[-4:]
+    print(df['ID'])
 
-# Sort everything chronologically
-df = df.sort_values(
-    ['Channel', 'Start_sample']
-).reset_index(drop=True)
-#endregion Parse formatted
+    # Sort everything chronologically
+    df = df.sort_values(
+        ['Channel', 'Start_sample']
+    ).reset_index(drop=True)
+    #endregion Parse formatted
 
-#region Segments and gaps
-# ----------------------------------------------------------------------
-# Find continuous segments and gaps
-# ----------------------------------------------------------------------
-segments = []
-gaps = []
-# Process each channel separately
-for channel, group in df.groupby('Channel'):
+    #region Segments and gaps
+    # ----------------------------------------------------------------------
+    # Find continuous segments and gaps
+    # ----------------------------------------------------------------------
+    segments = []
+    gaps = []
+    # Process each channel separately
+    for channel, group in df.groupby('Channel'):
 
-    group = group.sort_values('Start_sample').reset_index(drop=True)
+        group = group.sort_values('Start_sample').reset_index(drop=True)
 
-    # Start first continuous segment
-    segment_start = group.loc[0, 'Start_sample']
-    segment_end = group.loc[0, 'End_sample']
+        # Start first continuous segment
+        segment_start = group.loc[0, 'Start_sample']
+        segment_end = group.loc[0, 'End_sample']
 
-    segment_samples = group.loc[0, 'Samples']
+        segment_samples = group.loc[0, 'Samples']
 
-    segment_num = 1
-    gap_num = 1
+        segment_num = 1
+        gap_num = 1
 
-    for i in range(1, len(group)):
+        for i in range(1, len(group)):
 
-        previous_end = group.loc[i - 1, 'End_sample']
-        current_start = group.loc[i, 'Start_sample']
+            previous_end = group.loc[i - 1, 'End_sample']
+            current_start = group.loc[i, 'Start_sample']
 
-        current_end = group.loc[i, 'End_sample']
-        current_samples = group.loc[i, 'Samples']
+            current_end = group.loc[i, 'End_sample']
+            current_samples = group.loc[i, 'Samples']
 
-        # --------------------------------------------------------------
-        # Continuous
-        # --------------------------------------------------------------
+            # --------------------------------------------------------------
+            # Continuous
+            # --------------------------------------------------------------
 
-        if current_start <= previous_end:
+            if current_start <= previous_end:
 
-            # Extend current segment
-            segment_end = max(segment_end, current_end)
+                # Extend current segment
+                segment_end = max(segment_end, current_end)
 
-            segment_samples += current_samples
+                segment_samples += current_samples
 
-        # --------------------------------------------------------------
-        # Gap
-        # --------------------------------------------------------------
+            # --------------------------------------------------------------
+            # Gap
+            # --------------------------------------------------------------
 
-        else:
+            else:
 
-            # Save the continuous segment that just ended
-            duration = segment_end - segment_start
+                # Save the continuous segment that just ended
+                duration = segment_end - segment_start
 
-            segments.append({
-                'Channel': channel,
-                'Segment': segment_num,
-                'Start': segment_start,
-                'End': segment_end,
-                'Duration': format_duration(duration),
-                'Duration_seconds': duration.total_seconds(),
-                'Samples': segment_samples
-            })
+                segments.append({
+                    'Channel': channel,
+                    'Segment': segment_num,
+                    'Start': segment_start,
+                    'End': segment_end,
+                    'Duration': format_duration(duration),
+                    'Duration_seconds': duration.total_seconds(),
+                    'Samples': segment_samples
+                })
 
-            # Save the gap
-            gap_duration = current_start - previous_end
+                # Save the gap
+                gap_duration = current_start - previous_end
 
-            gaps.append({
-                'Channel': channel,
-                'Gap': gap_num,
-                'Start': previous_end,
-                'End': current_start,
-                'Duration': format_duration(gap_duration),
-                'Duration_seconds': gap_duration.total_seconds()
-            })
+                gaps.append({
+                    'Channel': channel,
+                    'Gap': gap_num,
+                    'Start': previous_end,
+                    'End': current_start,
+                    'Duration': format_duration(gap_duration),
+                    'Duration_seconds': gap_duration.total_seconds()
+                })
 
-            # Start a new continuous segment
-            segment_num += 1
-            gap_num += 1
+                # Start a new continuous segment
+                segment_num += 1
+                gap_num += 1
 
-            segment_start = current_start
-            segment_end = current_end
-            segment_samples = current_samples
+                segment_start = current_start
+                segment_end = current_end
+                segment_samples = current_samples
 
-    # ------------------------------------------------------------------
-    # Save final segment
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Save final segment
+        # ------------------------------------------------------------------
 
-    duration = segment_end - segment_start
+        duration = segment_end - segment_start
 
-    segments.append({
-        'Channel': channel,
-        'Segment': segment_num,
-        'Start': segment_start,
-        'End': segment_end,
-        'Duration': format_duration(duration),
-        'Duration_seconds': duration.total_seconds(),
-        'Samples': segment_samples
-    })
+        segments.append({
+            'Channel': channel,
+            'Segment': segment_num,
+            'Start': segment_start,
+            'End': segment_end,
+            'Duration': format_duration(duration),
+            'Duration_seconds': duration.total_seconds(),
+            'Samples': segment_samples
+        })
 
-#endregion Segments and gaps
+    #endregion Segments and gaps
 
 
-# ----------------------------------------------------------------------
-# Create summary DataFrames
-# ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # Create summary DataFrames
+    # ----------------------------------------------------------------------
 
-segments_df = pd.DataFrame(segments)
-gaps_df = pd.DataFrame(gaps, columns=[
-    'Channel', 'Gap', 'Start', 'End', 'Duration', 'Duration_seconds'
-])
+    segments_df = pd.DataFrame(segments)
+    gaps_df = pd.DataFrame(gaps, columns=[
+        'Channel', 'Gap', 'Start', 'End', 'Duration', 'Duration_seconds'
+    ])
 
-#region Summary Segments
-# ----------------------------------------------------------------------
-# Print continuous-segment summary
-# ----------------------------------------------------------------------
+    #region Summary Segments
+    # ----------------------------------------------------------------------
+    # Print continuous-segment summary
+    # ----------------------------------------------------------------------
 
-print()
-print("=" * 100)
-print("CONTINUOUS DATA SEGMENTS")
-print("=" * 100)
-
-print(
-    segments_df[
-        [
-            'Channel',
-            'Segment',
-            'Start',
-            'End',
-            'Duration',
-            'Samples'
-        ]
-    ].to_string(index=False)
-)
-#endregion Summary Segments
-
-#region Summary Gaps
-# ----------------------------------------------------------------------
-# Print gap summary
-# ----------------------------------------------------------------------
-
-print()
-print("=" * 100)
-print("GAPS")
-print("=" * 100)
-
-if gaps_df.empty:
-
-    print("No gaps found.")
-
-else:
+    print()
+    print("=" * 100)
+    print("CONTINUOUS DATA SEGMENTS")
+    print("=" * 100)
 
     print(
-        gaps_df[
+        segments_df[
             [
                 'Channel',
-                'Gap',
+                'Segment',
                 'Start',
                 'End',
-                'Duration'
+                'Duration',
+                'Samples'
             ]
         ].to_string(index=False)
     )
-# Save detailed gaps alongside the channel summary, including headers when no gaps were found.
-gaps_filename = f'{BASEPATH}/gaps_msi.csv'
-gaps_df.to_csv(
-    gaps_filename,
-    index=False,
-    date_format="%Y-%m-%dT%H:%M:%S.%f%z"
-)
-#endregion Summary Gaps
+    #endregion Summary Segments
 
-#region Summary Channels
-# ======================================================================
-# Compact channel summary
-# ======================================================================
+    #region Summary Gaps
+    # ----------------------------------------------------------------------
+    # Print gap summary
+    # ----------------------------------------------------------------------
 
-summary = []
+    print()
+    print("=" * 100)
+    print("GAPS")
+    print("=" * 100)
 
-for channel, group in df.groupby('Channel'):
+    if gaps_df.empty:
 
-    group = group.sort_values('Start_sample').reset_index(drop=True)
+        print("No gaps found.")
 
-    first_start = group['Start_sample'].min()
-    last_end = group['End_sample'].max()
+    else:
 
-    # Total time covered by the complete time range
-    total_time_range = last_end - first_start
+        print(
+            gaps_df[
+                [
+                    'Channel',
+                    'Gap',
+                    'Start',
+                    'End',
+                    'Duration'
+                ]
+            ].to_string(index=False)
+        )
+    # Save detailed gaps alongside the channel summary, including headers when no gaps were found.
+    gaps_filename = output_dir / 'gaps_msi.csv'
+    gaps_df.to_csv(
+        gaps_filename,
+        index=False,
+        date_format="%Y-%m-%dT%H:%M:%S.%f%z"
+    )
+    #endregion Summary Gaps
 
-    # Calculate gaps
-    total_gap = pd.Timedelta(0)
-    number_of_gaps = 0
+    #region Summary Channels
+    # ======================================================================
+    # Compact channel summary
+    # ======================================================================
 
-    for i in range(1, len(group)):
+    summary = []
 
-        previous_end = group.loc[i - 1, 'End_sample']
-        current_start = group.loc[i, 'Start_sample']
+    for channel, group in df.groupby('Channel'):
 
-        if current_start > previous_end:
+        group = group.sort_values('Start_sample').reset_index(drop=True)
 
-            gap = current_start - previous_end
+        first_start = group['Start_sample'].min()
+        last_end = group['End_sample'].max()
 
-            total_gap += gap
-            number_of_gaps += 1
+        # Total time covered by the complete time range
+        total_time_range = last_end - first_start
 
-    # Actual data duration = total time range - gaps
-    total_data = total_time_range - total_gap
+        # Calculate gaps
+        total_gap = pd.Timedelta(0)
+        number_of_gaps = 0
 
-    summary.append({
-        'ID': df['ID'][0],
-        'Channel': channel,
-        'First_Start': first_start,
-        'Last_End': last_end,
-        'Total_Data': format_duration(total_data),
-        'Number_of_Gaps': number_of_gaps,
-        'Total_Gap_Time': format_duration(total_gap)
-    })
+        for i in range(1, len(group)):
+
+            previous_end = group.loc[i - 1, 'End_sample']
+            current_start = group.loc[i, 'Start_sample']
+
+            if current_start > previous_end:
+
+                gap = current_start - previous_end
+
+                total_gap += gap
+                number_of_gaps += 1
+
+        # Actual data duration = total time range - gaps
+        total_data = total_time_range - total_gap
+
+        summary.append({
+            'ID': df['ID'][0],
+            'Channel': channel,
+            'First_Start': first_start,
+            'Last_End': last_end,
+            'Total_Data': format_duration(total_data),
+            'Number_of_Gaps': number_of_gaps,
+            'Total_Gap_Time': format_duration(total_gap)
+        })
 
 
-summary_df = pd.DataFrame(summary)
+    summary_df = pd.DataFrame(summary)
 
-# Print compact summary
-print()
-print("=" * 100)
-print("CHANNEL SUMMARY")
-print("=" * 100)
+    # Print compact summary
+    print()
+    print("=" * 100)
+    print("CHANNEL SUMMARY")
+    print("=" * 100)
 
-print(
-    summary_df.to_string(index=False)
-)
+    print(
+        summary_df.to_string(index=False)
+    )
 
-# Save summary
-filename = f'{BASEPATH}/summarize_msi.csv'
-Path(filename).parent.mkdir(parents=True, exist_ok=True)
-summary_df.to_csv(
-    filename,
-    index=False,
-    date_format="%Y-%m-%dT%H:%M:%S.%f"
-)
+    # Save summary
+    filename = output_dir / 'summarize_msi.csv'
+    Path(filename).parent.mkdir(parents=True, exist_ok=True)
+    summary_df.to_csv(
+        filename,
+        index=False,
+        date_format="%Y-%m-%dT%H:%M:%S.%f"
+    )
 
-print("\nSummary written to:")
-print(f"  {filename}")
-print("Gaps written to:")
-print(f"  {gaps_filename}")
-#endregion Summary Channels
+    print("\nSummary written to:")
+    print(f"  {filename}")
+    print("Gaps written to:")
+    print(f"  {gaps_filename}")
+    #endregion Summary Channels
+
+    return summary_df, gaps_df
+
+
+# Use the same identifiers as time_msi_script.sh and reformat_program_output.py.
+# Change BASEPATH to process another deployment.
+BASEPATH = Path(__file__).resolve().parent / 'OESCHIBACH' / '2026' / 'DEPLOYMENT_01'
+ids = [
+    '453039046',
+    '453039124',
+    '453039008',
+    '453039107',
+    '453038975',
+    '453039121',
+    '453039094',
+    '453039042',
+    '453039062',
+    '453039018',
+    '453039109',
+    '453039045',
+    '453039069',
+    '453039122',
+    '453038998',
+    '453039022',
+    '453039041',
+    '453039129',
+    '453039086',
+    '453038986',
+    '453039097',
+    '453039113',
+    '453039073',
+    '453039150',
+    '453039037',
+    '453039141',
+    '453039065'
+    ]
+input_files = [BASEPATH / identifier / 'program_output_formatted.csv' for identifier in ids]
+
+def main():
+    """Process each configured file, reporting invalid inputs and continuing."""
+    for input_file in input_files:
+        try:
+            summarize_file(input_file)
+        except (FileNotFoundError, pd.errors.EmptyDataError, ValueError) as error:
+            print(f'Skipping {input_file}: {error}')
+    print("\nAll files processed.")
+
+
+if __name__ == '__main__':
+    main()
