@@ -296,35 +296,22 @@ def summarize_file(input_file):
 
 # Use the same identifiers as time_msi_script.sh and reformat_program_output.py.
 # Change BASEPATH to process another deployment.
-BASEPATH = Path(__file__).resolve().parent / 'OESCHIBACH' / '2026' / 'DEPLOYMENT_01'
+BASEPATH = Path(__file__).resolve().parent / 'SPZ' / '2025' / 'DEPLOYMENT_02'
 ids = [
-    '453039046',
-    '453039124',
-    '453039008',
-    '453039107',
-    '453038975',
-    '453039121',
-    '453039094',
-    '453039042',
-    '453039062',
-    '453039018',
-    '453039109',
-    '453039045',
-    '453039069',
-    '453039122',
-    '453038998',
-    '453039022',
-    '453039041',
-    '453039129',
-    '453039086',
-    '453038986',
-    '453039097',
-    '453039113',
-    '453039073',
-    '453039150',
-    '453039037',
-    '453039141',
-    '453039065'
+    '453039026',
+    '453039127',
+    '453039016',
+    '453039089',
+    '453039132',
+    '453039024',
+    '453039000',
+    '453039048',
+    '453038994',
+    '453038955',
+    '453039012',
+    '453038995',
+    '453039083',
+    '453039133'
     ]
 input_files = [BASEPATH / identifier / 'program_output_formatted.csv' for identifier in ids]
 

@@ -265,7 +265,7 @@ def plot_timeline(nodes, output, tolerance, title, show=False):
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    default = Path(__file__).resolve().parent / "OESCHIBACH" / "2026" / "DEPLOYMENT_01"
+    default = Path(__file__).resolve().parent / "SPZ" / "2025" / "DEPLOYMENT_02" #NOTE : Change this default to the deployment you want to visualize.
     parser.add_argument("deployment", nargs="?", type=Path, default=default,
                         help="deployment directory containing identifier subdirectories")
     parser.add_argument("--ids", nargs="+", help="only plot these identifier directory names")

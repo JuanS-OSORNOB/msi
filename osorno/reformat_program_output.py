@@ -31,33 +31,20 @@ def reformat_file(input_file = "yourfile.log"):
             # Write as semicolon-separated values
             f.write(";".join(columns) + "\n")
 
-input_files = ["/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039046/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039124/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039008/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039107/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453038975/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039121/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039094/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039042/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039062/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039018/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039109/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039045/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039069/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039122/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453038998/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039022/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039041/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039129/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039086/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453038986/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039097/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039113/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039073/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039150/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039037/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039141/program_output.log",
-               "/home/manip/GitHub/msi/osorno/OESCHIBACH/2026/DEPLOYMENT_01/453039065/program_output.log"
+input_files = ["/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039026/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039127/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039016/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039089/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039132/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039024/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039000/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039048/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453038994/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453038955/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039012/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453038995/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039083/program_output.log",
+               "/home/manip/GitHub/msi/osorno/SPZ/2025/DEPLOYMENT_02/453039133/program_output.log"
                ]
 for file in input_files:
     reformat_file(file)

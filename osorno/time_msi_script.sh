@@ -16,7 +16,7 @@
 # chmod +x osorno/time_msi_script.sh
 # ./osorno/time_msi_script.sh
 
-ids=(453039046 453039124 453039008 453039107 453038975 453039121 453039094 453039042 453039062 453039018 453039109 453039045 453039069 453039122 453038998 453039022 453039041 453039129 453039086 453038986 453039097 453039113 453039073 453039150 453039037 453039141 453039065)
+ids=(453039026 453039127 453039016 453039089 453039132 453039024 453039000 453039048 453038994 453038955 453039012 453038995 453039083 453039133)
 
 batch_start_seconds=$SECONDS
 counter=0
@@ -24,14 +24,15 @@ echo "Starting MSI batch for ${#ids[@]} identifiers..."
 
 for id in "${ids[@]}"; do
     counter=$((counter + 1))
+    echo
     echo "[$counter/${#ids[@]}] Running MSI for $id..."
-    mkdir -p "./osorno/OESCHIBACH/2026/DEPLOYMENT_01/${id}" || exit 1
+    mkdir -p "./osorno/SPZ/2025/DEPLOYMENT_02/${id}" || exit 1
 
     /usr/bin/time -v \
       ./msi -T \
-      /mnt/e/SOLODATA/OESCHIBACH/2026/DEPLOYMENT_01/${id}*.[ENZ].miniseed \
-      > "./osorno/OESCHIBACH/2026/DEPLOYMENT_01/${id}/program_output.log" \
-      2> "./osorno/OESCHIBACH/2026/DEPLOYMENT_01/${id}/program_runtime.log"
+      /mnt/e/SOLODATA/SPZ/2025/DEPLOYMENT_02/${id}*.[ENZ].miniseed \
+      > "./osorno/SPZ/2025/DEPLOYMENT_02/${id}/program_output.log" \
+      2> "./osorno/SPZ/2025/DEPLOYMENT_02/${id}/program_runtime.log"
 
     echo "[$counter/${#ids[@]}] Finished $id"
 done

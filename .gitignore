@@ -4,6 +4,7 @@
 *.png
 *.jpg
 *.pdf
+*.json
 
 # C build objects
 *.a
